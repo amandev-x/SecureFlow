@@ -67,7 +67,7 @@ pipeline {
                 chmod +x $HOME/bin/gitleaks
               fi
 
-               export PATH=$HOME/bin/:PATH
+               export PATH="$HOME/bin/:$PATH"
 
                gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 1
             '''
