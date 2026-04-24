@@ -278,14 +278,24 @@ pipeline {
                           # wait for rollout
                          kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
 
-                         echo "✅ Deployment complete"
+                         echo "Deployment complete"
                         
                         EOF
                         '''
                     }
                 }
             }
-    }
+
+            post {
+                failure {
+                    echo "Deployment to Kubernetes failed"
+                }
+
+                success {
+                    echo "Successfully deployed to Kubernetes"
+                }
+            }
+        }
 
         stage('Health Check') {
         steps {
@@ -297,7 +307,7 @@ pipeline {
                 STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://${APP_SERVER_IP}:8000/health)
 
                 if [ "\$STATUS" = "200" ]; then 
-                  echo "✅ Health check passed. Api gateway is up"
+                  echo "Health check passed. Api gateway is up"
                   exit 0
                 fi 
 
@@ -308,15 +318,6 @@ pipeline {
               echo "Health check failed after 5 attempts"
               exit 1
             """
-        }
-    }
-
-    post {
-        failure {
-            echo "Deployment to Kubernetes failed"
-        }
-        success {
-            echo "Successfully deployed to Kubernetes"
         }
     }
 }
