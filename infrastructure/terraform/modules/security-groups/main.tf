@@ -102,7 +102,7 @@ resource "aws_vpc_security_group_ingress_rule" "jenkins_ui" {
   ip_protocol       = "tcp"
   from_port         = 8080
   to_port           = 8080
-  cidr_ipv4         = var.my_ip
+  cidr_ipv4         = "0.0.0.0/0"
 
   tags = {
     Name        = "${var.project_name}-jenkins-ui-ingress"
