@@ -61,6 +61,21 @@ resource "aws_vpc_security_group_ingress_rule" "https_ingress" {
   }
 }
 
+resource "aws_vpc_security_group_ingress_rule" "jenkins_to_app_ssh" {
+  security_group_id = aws_security_group.app_server.id
+  description       = "Allow SSH from Jenkins Server"
+  ip_protocol       = "tcp"
+  from_port         = 22
+  to_port           = 22
+  # This targets the Jenkins SG specifically:
+  referenced_security_group_id = aws_security_group.jenkins.id
+
+  tags = {
+    Name        = "${var.project_name}-jenkins-to-app-ssh"
+    Environment = var.environment
+  }
+}
+
 resource "aws_vpc_security_group_egress_rule" "app-egress" {
   security_group_id = aws_security_group.app_server.id
   cidr_ipv4         = "0.0.0.0/0"
