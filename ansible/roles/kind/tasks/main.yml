@@ -66,12 +66,15 @@
           extraPortMappings:
             - containerPort: 30000
               hostPort: 80
+              listenAddress: "0.0.0.0"
               protocol: TCP
             - containerPort: 30001
               hostPort: 443
+              listenAddress: "0.0.0.0"
               protocol: TCP
             - containerPort: 30080
               hostPort: 8000
+              listenAddress: "0.0.0.0"
               protocol: TCP
 
 - name: Check if Kind cluster already exists
