@@ -33,6 +33,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# =========================
+# Ansible
+# =========================
+./ansible/inventory/hosts.ini
+./ansible/group_vars/all.yml
+
 # Distribution / packaging
 build/
 dist/
