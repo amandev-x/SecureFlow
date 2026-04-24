@@ -11,7 +11,7 @@ pipeline {
     // ]
     // }
 
-    environemnt {
+    environment {
         AWS_REGION      =   "ap-south-1"
         ECR_REGISTRY    =   "066606187609.dkr.ecr.ap-south-1.amazonaws.com"
         PROJECT_NAME    =   "secureflow"
@@ -49,8 +49,8 @@ pipeline {
         }
     }
 
-    stage('Gitleaks Secret Scan') {
-        steps {
+        stage('Gitleaks Secret Scan') {
+         steps {
             sh '''
               echo "Running Gitleaks secret scan..."
 
@@ -82,7 +82,7 @@ pipeline {
         }
     }
 
-    stage('Safety Dependency Scan') {
+        stage('Safety Dependency Scan') {
         steps {
             sh '''
               pip3 install safety --quiet
@@ -106,7 +106,7 @@ pipeline {
         }
     }
 
-    stage('Docker Build') {
+        stage('Docker Build') {
         steps {
                 script {
                     def services = [
@@ -141,7 +141,7 @@ pipeline {
             }
     }
 
-    stage('Trivy Scan Image') {
+        stage('Trivy Scan Image') {
         steps {
             script {
                 def services = [
@@ -196,7 +196,7 @@ pipeline {
         }
     }
 
-    stage('Push to ECR') {
+        stage('Push to ECR') {
         steps {
             script {
                 sh """
@@ -226,7 +226,7 @@ pipeline {
         }
     }
 
-    stage('Deploy to Kubernetes') {
+        stage('Deploy to Kubernetes') {
         steps {
             sshagent(['app-server-ssh']) {
                 sh """
@@ -265,7 +265,7 @@ pipeline {
         }
     }
 
-    stage('Health Check') {
+        stage('Health Check') {
         steps {
             sh """
               echo "🔍 Running health checks..."
