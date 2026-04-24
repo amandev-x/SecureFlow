@@ -1,0 +1,7 @@
+project_name: secureflow
+aws_region: ap-south-1
+
+ecr_registry: "<your-account-id>.dkr.ecr.ap-south-1.amazonaws.com"
+
+kubectl_version: v1.36.0
+kind_version: v0.31.0
