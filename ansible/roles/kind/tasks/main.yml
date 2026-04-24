@@ -1,0 +1,101 @@
+---
+- name: Install kubectl
+  shell: |
+    curl -LO "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+    chmod +x kubectl
+    mv kubectl /usr/local/bin/kubectl
+  args:
+    creates: /usr/local/bin/kubectl
+
+
+- name: Verify kubectl installation
+  command: kubectl version --client
+  register: kubectl_version_out
+
+
+- name: Print kubectl version
+  debug:
+    msg: "{{ kubectl_version_out.stdout }}"
+
+
+- name: Install Kind
+  shell: |
+    curl -Lo /usr/local/bin/kind \
+    https://kind.sigs.k8s.io/dl/{{ kind_version }}/kind-linux-amd64
+    chmod +x /usr/local/bin/kind
+  args:
+    creates: /usr/local/bin/kind
+
+
+- name: Verify Kind installation
+  command: kind version
+  register: kind_version_out
+
+
+- name: Print Kind version
+  debug:
+    msg: "{{ kind_version_out.stdout }}"
+
+- name: Install Helm
+  shell: |
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm
+
+
+- name: Verify Helm installation
+  command: helm version
+  register: helm_version_out
+
+
+- name: Print Helm version
+  debug:
+    msg: "{{ helm_version_out.stdout }}"
+
+- name: Create Kind cluster config
+  copy:
+    dest: /home/ubuntu/kind-config.yml
+    owner: ubuntu
+    group: ubuntu
+    content: |
+      kind: Cluster
+      apiVersion: kind.x-k8s.io/v1alpha4
+      name: {{ kind_cluster_name }}
+      nodes:
+        - role: control-plane
+          extraPortMappings:
+            - containerPort: 30000
+              hostPort: 80
+              protocol: TCP
+            - containerPort: 30001
+              hostPort: 443
+              protocol: TCP
+            - containerPort: 30080
+              hostPort: 8000
+              protocol: TCP
+
+- name: Check if Kind cluster already exists
+  command: kind get clusters
+  register: existing_clusters
+  changed_when: false
+
+
+- name: Create Kind cluster
+  shell: kind create cluster --config /home/ubuntu/kind-config.yml
+  when: kind_cluster_name not in existing_clusters.stdout
+
+
+- name: Ensure .kube directory exists for ubuntu user
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0700'
+
+
+- name: Set kubectl context to Kind cluster
+  shell: kubectl config use-context kind-{{ kind_cluster_name }}
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+
