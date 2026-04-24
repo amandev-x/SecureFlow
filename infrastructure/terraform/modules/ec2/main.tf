@@ -19,6 +19,7 @@ resource "aws_instance" "app_server" {
   key_name               = var.key_name
   subnet_id              = var.public_subnet_id
   vpc_security_group_ids = [var.app_server_sg_id]
+  iam_instance_profile   = aws_iam_instance_profile.app_server_profile.name
 
   root_block_device {
     volume_size = 15
@@ -40,7 +41,7 @@ resource "aws_instance" "jenkins" {
   key_name               = var.key_name
   subnet_id              = var.public_subnet_id
   vpc_security_group_ids = [var.jenkins_sg_id]
-
+  iam_instance_profile   = aws_iam_instance_profile.jenkins_profile.name
   root_block_device {
     volume_size = 10
     volume_type = "gp3"
