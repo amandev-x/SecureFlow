@@ -240,38 +240,40 @@ pipeline {
         stage('Deploy to Kubernetes') {
         steps {
             sshagent(['app-server-ssh']) {
-                sh """
+                sh '''
                   echo "Deploying to Kubernetes cluster..."
 
-                  ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} '
+                  ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} << 'EOF'
+                  echo "Connected to remote server"
 
                   aws ecr get-login-password --region ${AWS_REGION} | \
                     docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
 
-                // Pull latest code 
-                cd ~/Secureflow && git pull origin main
+                  # Pull latest code 
+                  cd ~/Secureflow && git pull origin main
 
-                // Update image tags in deployment
-                find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:${env.GIT_SHA}|g"
-
-
-                // Apply manifests
-                kubectl apply -f k8s/namespace.yml
-                kubectl apply -f k8s/secrets/app-secrets.yml
-                kubectl apply -f k8s/user-service/
-                kubectl apply -f k8s/product-service/
-                kubectl apply -f k8s/order-service/
-                kubectl apply -f k8s/notification-service/
-                kubectl apply -f k8s/api-gateway/
+                  # Update image tags in deployment
+                  find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:${env.GIT_SHA}|g"
 
 
-                # rollout restart to pick up new images
-                kubectl rollout restart deployment -n secureflow
-            
-            '
+                  # Apply manifests
+                  kubectl apply -f k8s/namespace.yml
+                  kubectl apply -f k8s/secrets/app-secrets.yml
+                  kubectl apply -f k8s/user-service/
+                  kubectl apply -f k8s/product-service/
+                  kubectl apply -f k8s/order-service/
+                  kubectl apply -f k8s/notification-service/
+                  kubectl apply -f k8s/api-gateway/
 
-                """
+
+                  # rollout restart to pick up new images
+                  kubectl rollout restart deployment -n secureflow
+
+                  echo "Deployed to Kubernetes cluster"
+                  EOF
+
+                '''
             }
         }
     }
