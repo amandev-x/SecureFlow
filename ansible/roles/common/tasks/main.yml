@@ -1,0 +1,46 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+
+- name: Install common packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - unzip
+      - vim
+      - htop
+      - net-tools
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - python3-pip
+      - apt-transport-https
+    state: present
+
+
+- name: Set timezone to UTC
+  timezone:
+    name: UTC
+
+
+- name: Install AWS CLI
+  shell: |
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+    unzip -o /tmp/awscliv2.zip -d /tmp
+    /tmp/aws/install --update
+  args:
+    creates: /usr/local/bin/aws
+
+
+- name: Verify AWS CLI installation
+  command: aws --version
+  register: aws_version
+
+- name: Print AWS CLI version
+  debug:
+    msg: "{{ aws_version.stdout }}"
