@@ -1,15 +1,15 @@
 pipeline {
     agent any 
 
-    def getServices() {
-        return [
-        [name: 'api-gateway', dir: 'api-gateway'],
-        [name: 'user-service', dir: 'user-services'],
-        [name: 'product-service', dir: 'product-services'],
-        [name: 'order-service', dir: 'order-services'],
-        [name: 'notification-service', dir: 'notification-services']
-    ]
-    }
+    // def getServices() {
+    //     return [
+    //     [name: 'api-gateway', dir: 'api-gateway'],
+    //     [name: 'user-service', dir: 'user-services'],
+    //     [name: 'product-service', dir: 'product-services'],
+    //     [name: 'order-service', dir: 'order-services'],
+    //     [name: 'notification-service', dir: 'notification-services']
+    // ]
+    // }
 
     environemnt {
         AWS_REGION      =   "ap-south-1"
