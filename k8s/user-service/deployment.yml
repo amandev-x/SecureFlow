@@ -15,6 +15,8 @@ spec:
       labels:
         app: user-service
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
         - name: user-service
           image: 066606187609.dkr.ecr.ap-south-1.amazonaws.com/secureflow/user-service:latest
