@@ -158,15 +158,22 @@ pipeline {
 
                 // Install trivy if not present
                 sh '''
+                  mkdir -p "$HOME/bin"
+
                   if ! command -v trivy &> /dev/null; then
                     echo "Installing Trivy..."
                             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-                                | sh -s -- -b /usr/local/bin
+                                | sh -s -- -b "$HOME/bin"
                   fi
+
+                  export PATH="$HOME/bin:$PATH"
+                  trivy --version
                 '''
 
                 services.each { service ->
                         sh """
+                            export PATH="\$HOME/bin:\$PATH"
+
                             echo "Scanning ${service}..."
 
                             trivy image \
