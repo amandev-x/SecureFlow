@@ -243,7 +243,7 @@ pipeline {
                 sh """
                   echo "Deploying to Kubernetes cluster..."
 
-                  ssh -o StrictHostKeyChecking=no -tt ubuntu@${APP_SERVER_IP} bash -s << EOF
+                  ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} '
 
                   set -e 
 
@@ -274,7 +274,7 @@ pipeline {
                   kubectl rollout restart deployment -n secureflow
 
                   echo "Deployed to Kubernetes cluster"
-                  EOF
+                '
 
                 """
             }
