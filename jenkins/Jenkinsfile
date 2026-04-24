@@ -1,0 +1,313 @@
+pipeline {
+    agent any 
+
+    def getServices() {
+        return [
+        [name: 'api-gateway', dir: 'api-gateway'],
+        [name: 'user-service', dir: 'user-services'],
+        [name: 'product-service', dir: 'product-services'],
+        [name: 'order-service', dir: 'order-services'],
+        [name: 'notification-service', dir: 'notification-services']
+    ]
+    }
+
+    environemnt {
+        AWS_REGION      =   "ap-south-1"
+        ECR_REGISTRY    =   "066606187609.dkr.ecr.ap-south-1.amazonaws.com"
+        PROJECT_NAME    =   "secureflow"
+        APP_SERVER_IP   =   "13.206.174.103"
+        CLUSTER_NAME    =   "secureflow"
+        GIT_SHA         =   sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Code checked out from ${env.GIT_BRANCH}"
+            }
+        }
+
+        stage('Bandit') {
+            steps {
+                sh '''
+                  pip3 install bandit --quiet
+                  echo "Running Bandit scan"
+
+                  bandit -r services/ -f json -o bandit-report.json --severity-level medium || true
+
+                  echo "Bandit scan complete"
+                '''
+            }
+
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bandit-report.json', allowEmptyArchive: true
+                }
+            }
+        }
+    }
+
+    stage('Gitleaks Secret Scan') {
+        steps {
+            sh '''
+              echo "Running Gitleaks secret scan..."
+
+            //   Install gitleaks if not present
+
+            if ! command -v gitleaks &> /dev/null; then
+                echo "Installing gitleaks..."
+
+                curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz \
+                | tar -xz -C /usr/local/bin gitleaks
+                
+                chmod +x /usr/local/bin/gitleaks
+            fi
+
+            gitleaks detect -- source . --report-format json --report-path gitleaks-report.json --exit-code 1
+
+            echo "No secrets found in codebase"
+            '''
+        }
+
+        post {
+            always {
+                archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
+            }
+
+            failure {
+                error "Gitleaks found secret in codebase. Pipeline stopped"
+            }
+        }
+    }
+
+    stage('Safety Dependency Scan') {
+        steps {
+            sh '''
+              pip3 install safety --quiet
+
+              echo "Running safety dependency scan"
+
+              for service in user-service product-service order-service api-gateway notification-service; do
+                echo "Scanning $service dependencies..."
+                
+                safety check -r services/$service/requirements.txt --json -o safety-$service-report.json || true
+              done
+
+              echo "Dependency scan complete"
+            '''
+        }
+
+        post {
+            always {
+                archiveArtifacts artifacts: 'safety-*-report.json', allowEmptyArchive: true
+            }
+        }
+    }
+
+    stage('Docker Build') {
+        steps {
+                script {
+                    def services = [
+                        'api-gateway',
+                        'user-service',
+                        'product-service',
+                        'order-service',
+                        'notification-service'
+                    ]
+
+                    def serviceDirs = [
+                        'api-gateway'          : 'api-gateway',
+                        'user-service'         : 'user-services',
+                        'product-service'      : 'product-services',
+                        'order-service'        : 'order-services',
+                        'notification-service' : 'notification-services'
+                    ]
+
+                    echo "Building images with tag: ${env.GIT_SHA}"
+
+                    services.each { service ->
+                        def dir = serviceDirs[service]
+                        sh """
+                            docker build \
+                                -t ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA} \
+                                -t ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:latest \
+                                ./services/${dir}
+                        """
+                        echo "Built ${service}"
+                    }
+                }
+            }
+    }
+
+    stage('Trivy Scan Image') {
+        steps {
+            script {
+                def services = [
+                        'api-gateway',
+                        'user-service',
+                        'product-service',
+                        'order-service',
+                        'notification-service'
+                    ]
+
+                // Install trivy if not present
+                sh '''
+                  if ! command -v trivy &> /dev/null; then
+                    echo "Installing Trivy..."
+                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+                                | sh -s -- -b /usr/local/bin
+                  fi
+                '''
+
+                services.each { service ->
+                        sh """
+                            echo "Scanning ${service}..."
+
+                            trivy image \
+                                --format json \
+                                --output trivy-${service}-report.json \
+                                --severity LOW,MEDIUM,HIGH,CRITICAL \
+                                ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
+
+                            # fail pipeline if CRITICAL CVEs found
+                            trivy image \
+                                --exit-code 1 \
+                                --severity CRITICAL \
+                                ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
+
+                            echo "${service} passed Trivy scan"
+                        """
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'trivy-*-report.json', allowEmptyArchive: true
+
+        }
+        
+        failure {
+            error "Trivy found CRITICAL CVEs! Pipeline stopped."
+            
+        }
+        
+        }
+    }
+
+    stage('Push to ECR') {
+        steps {
+            script {
+                sh """
+                  echo "Login to ECR
+
+                  aws ecr get-login-password --region ${AWS_REGION} | \
+                  docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                """
+
+                def services = [
+                            'api-gateway',
+                            'user-service',
+                            'product-service',
+                            'order-service',
+                            'notification-service'
+                        ]
+
+                services.each { service ->
+                            sh """
+                                echo "Pushing ${service}..."
+                                docker push ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
+                                docker push ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:latest
+                                echo "✅ Pushed ${service}"
+                            """
+                }
+            }
+        }
+    }
+
+    stage('Deploy to Kubernetes') {
+        steps {
+            sshagent(['app-server-ssh']) {
+                sh """
+                  echo "Deploying to Kubernetes cluster..."
+
+                  ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} '
+
+                  aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin ${ECR_REGISTRY}
+
+
+                // Pull latest code 
+                cd ~/Secureflow && git pull origin main
+
+                // Update image tags in deployment
+                find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:${env.GIT_SHA}|g"
+
+
+                // Apply manifests
+                kubectl apply -f k8s/namespace.yml
+                kubectl apply -f k8s/secrets/app-secrets.yml
+                kubectl apply -f k8s/user-service/
+                kubectl apply -f k8s/product-service/
+                kubectl apply -f k8s/order-service/
+                kubectl apply -f k8s/notification-service/
+                kubectl apply -f k8s/api-gateway/
+
+
+                # rollout restart to pick up new images
+                kubectl rollout restart deployment -n secureflow
+            
+            '
+
+                """
+            }
+        }
+    }
+
+    stage('Health Check') {
+        steps {
+            sh """
+              echo "🔍 Running health checks..."
+              sleep 10
+
+              for i in 1 2 3 4 5; do 
+                STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://${APP_SERVER_IP}:8000/health)
+
+                if [ "\$STATUS" = "200" ]; then 
+                  echo "✅ Health check passed. Api gateway is up"
+                  exit 0
+                fi 
+
+                echo "Attempt \$i failed (status: \$STATUS), retrying in 10s..."
+                sleep 5
+              done
+
+              echo "Health check failed after 5 attempts"
+              exit 1
+            """
+        }
+    }
+}
+
+// ── Post Pipeline ──────────────────────────────────────────────────────
+    post {
+        success {
+            echo """
+             Pipeline completed successfully!
+            ─────────────────────────────────
+            Branch  : ${env.GIT_BRANCH}
+            Commit  : ${env.GIT_SHA}
+            App URL : http://${APP_SERVER_IP}:8000
+            """
+        }
+        failure {
+            echo " Pipeline failed — check logs above"
+        }
+        always {
+            // clean up Docker images to save disk space
+            sh """
+                docker image prune -f || true
+            """
+        }
+    }
