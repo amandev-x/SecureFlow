@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: notification-worker-deployment
+  namespace: secureflow
+  labels:
+    app: notification-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-worker
+  template:
+    metadata:
+      name: notification-worker
+      labels:
+        app: notification-worker
+    spec:
+      containers:
+        - name: notification-worker
+          image: 066606187609.dkr.ecr.ap-south-1.amazonaws.com/secureflow/notification-service:latest
+          imagePullPolicy: Always
+          command: ["celery", "-A", "app.worker", "worker", --loglevel=info]
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: REDIS_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
