@@ -36,8 +36,8 @@ __pycache__/
 # =========================
 # Ansible
 # =========================
-./ansible/inventory/hosts.ini
-./ansible/group_vars/all.yml
+ansible/inventory/hosts.ini
+ansible/group_vars/all.yml
 
 # Distribution / packaging
 build/
