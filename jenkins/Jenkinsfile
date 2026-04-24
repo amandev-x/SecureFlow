@@ -240,10 +240,13 @@ pipeline {
         stage('Deploy to Kubernetes') {
         steps {
             sshagent(['app-server-ssh']) {
-                sh '''
+                sh """
                   echo "Deploying to Kubernetes cluster..."
 
-                  ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} << 'EOF'
+                  ssh -o StrictHostKeyChecking=no -tt ubuntu@${APP_SERVER_IP} bash -s << EOF
+
+                  set -e 
+
                   echo "Connected to remote server"
 
                   aws ecr get-login-password --region ${AWS_REGION} | \
@@ -273,7 +276,7 @@ pipeline {
                   echo "Deployed to Kubernetes cluster"
                   EOF
 
-                '''
+                """
             }
         }
     }
