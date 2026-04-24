@@ -15,7 +15,7 @@ pipeline {
         AWS_REGION      =   "ap-south-1"
         ECR_REGISTRY    =   "066606187609.dkr.ecr.ap-south-1.amazonaws.com"
         PROJECT_NAME    =   "secureflow"
-        APP_SERVER_IP   =   "13.206.174.103"
+        APP_SERVER_IP   =   "10.0.1.166"
         CLUSTER_NAME    =   "secureflow"
     }
 
@@ -244,7 +244,7 @@ pipeline {
                         sh '''
                           echo "Deploying to Kubernetes cluster..."
 
-                          ssh -T -i ${SSH_KEY} -o BatchMode=yes -o StrictHostKeyChecking=no ${SSH_USER}@${APP_SERVER_IP} << EOF
+                          ssh -T -i ${SSH_KEY} -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=30 ${SSH_USER}@${APP_SERVER_IP} << EOF
 set -e
 echo "Authenticating with ECR..."
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
