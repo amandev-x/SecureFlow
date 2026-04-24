@@ -1,0 +1,10 @@
+---
+- name: Configure Jenkins Server
+  hosts: jenkins_servers
+  gather_facts: yes
+  become: true
+
+  roles:
+    - common
+    - docker
+    - jenkins
