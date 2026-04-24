@@ -17,8 +17,6 @@ pipeline {
         PROJECT_NAME    =   "secureflow"
         APP_SERVER_IP   =   "13.206.174.103"
         CLUSTER_NAME    =   "secureflow"
-        GIT_SHA         =   sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-        
     }
 
     stages {
@@ -47,7 +45,6 @@ pipeline {
                 }
             }
         }
-    }
 
         stage('Gitleaks Secret Scan') {
          steps {
@@ -125,6 +122,7 @@ pipeline {
                         'notification-service' : 'notification-services'
                     ]
 
+                    env.GIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     echo "Building images with tag: ${env.GIT_SHA}"
 
                     services.each { service ->
@@ -288,6 +286,7 @@ pipeline {
             """
         }
     }
+}
 }
 
 // ── Post Pipeline ──────────────────────────────────────────────────────
