@@ -16,6 +16,8 @@ spec:
       labels:
         app: order-service
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
         - name: order-service
           image: 066606187609.dkr.ecr.ap-south-1.amazonaws.com/secureflow/order-service:latest
