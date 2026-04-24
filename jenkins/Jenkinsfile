@@ -211,7 +211,7 @@ pipeline {
         steps {
             script {
                 sh """
-                  echo "Login to ECR
+                  echo "Login to ECR"
 
                   aws ecr get-login-password --region ${AWS_REGION} | \
                   docker login --username AWS --password-stdin ${ECR_REGISTRY}
@@ -230,7 +230,7 @@ pipeline {
                                 echo "Pushing ${service}..."
                                 docker push ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
                                 docker push ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:latest
-                                echo "✅ Pushed ${service}"
+                                echo "Pushed ${service}"
                             """
                 }
             }
