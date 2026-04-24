@@ -30,6 +30,7 @@ pipeline {
         stage('Bandit') {
             steps {
                 sh '''
+                  export PATH=$PATH:/var/lib/jenkins/.local/bin
                   pip3 install bandit --quiet
                   echo "Running Bandit scan"
 
@@ -51,20 +52,18 @@ pipeline {
             sh '''
               echo "Running Gitleaks secret scan..."
 
-            //   Install gitleaks if not present
+              #Install gitleaks if not present
 
-            if ! command -v gitleaks &> /dev/null; then
+              if ! command -v gitleaks &> /dev/null; then
                 echo "Installing gitleaks..."
 
                 curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz \
                 | tar -xz -C /usr/local/bin gitleaks
                 
                 chmod +x /usr/local/bin/gitleaks
-            fi
+              fi
 
-            gitleaks detect -- source . --report-format json --report-path gitleaks-report.json --exit-code 1
-
-            echo "No secrets found in codebase"
+              gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 1
             '''
         }
 
