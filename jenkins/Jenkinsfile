@@ -129,6 +129,7 @@ pipeline {
 
                     env.GIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     echo "Building images with tag: ${env.GIT_SHA}"
+                    sh "aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 066606187609.dkr.ecr.ap-south-1.amazonaws.com"
 
                     services.each { service ->
                         def dir = serviceDirs[service]
