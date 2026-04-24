@@ -238,47 +238,53 @@ pipeline {
     }
 
         stage('Deploy to Kubernetes') {
-        steps {
-            sshagent(['app-server-ssh']) {
-                sh """
-                  echo "Deploying to Kubernetes cluster..."
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'app-server-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                        sh '''
+                          echo "Deploying to Kubernetes cluster..."
 
-                  ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} '
+                          ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${APP_SERVER_IP} << 'EOF'
 
-                  set -e 
+                          set -e 
 
-                  echo "Connected to remote server"
+                          echo "Authenticating with ECR..."
 
-                  aws ecr get-login-password --region ${AWS_REGION} | \
-                    docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                          aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
+                          echo "Navigating to Secureflow directory..."
+                          cd ~/Secureflow
 
-                  # Pull latest code 
-                  cd ~/Secureflow && git pull origin main
+                          echo "Pulling latest changes..."
+                          git pull origin main
 
-                  # Update image tags in deployment
-                  find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:${env.GIT_SHA}|g"
+                          echo "Updating deployment manifests with image tag: ${GIT_SHA}..."
 
+                          find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:${GIT_SHA}|g"
 
-                  # Apply manifests
-                  kubectl apply -f k8s/namespace.yml
-                  kubectl apply -f k8s/secrets/app-secrets.yml
-                  kubectl apply -f k8s/user-service/
-                  kubectl apply -f k8s/product-service/
-                  kubectl apply -f k8s/order-service/
-                  kubectl apply -f k8s/notification-service/
-                  kubectl apply -f k8s/api-gateway/
+                          echo "Applying Kubernetes manifests..."
 
+                          kubectl apply -f k8s/namespace.yml
+                          kubectl apply -f k8s/secrets/app-secrets.yml
+                          kubectl apply -f k8s/user-service/
+                          kubectl apply -f k8s/product-service/
+                          kubectl apply -f k8s/order-service/
+                          kubectl apply -f k8s/notification-service/
+                          kubectl apply -f k8s/api-gateway/
 
-                  # rollout restart to pick up new images
-                  kubectl rollout restart deployment -n secureflow
+                          # rollout restart
+                          kubectl rollout restart deployment -n secureflow
 
-                  echo "Deployed to Kubernetes cluster"
-                '
+                          # wait for rollout
+                         kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
 
-                """
+                         echo "✅ Deployment complete"
+                        
+                        EOF
+                        '''
+                    }
+                }
             }
-        }
     }
 
         stage('Health Check') {
@@ -302,6 +308,15 @@ pipeline {
               echo "Health check failed after 5 attempts"
               exit 1
             """
+        }
+    }
+
+    post {
+        failure {
+            echo "Deployment to Kubernetes failed"
+        }
+        success {
+            echo "Successfully deployed to Kubernetes"
         }
     }
 }
