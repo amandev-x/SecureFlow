@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: product-service-policy
+  namespace: secureflow
+spec:
+  podSelector:
+    matchLabels:
+      app: product-service
+  policyTypes:
+      - Ingress
+      - Egress 
+
+  ingress:
+      # Accept from api-gateway and order-service
+      - from:
+          - podSelector:
+              matchLabels:
+                  app: api-gateway
+          - podSelector:
+              matchLabels:
+                  app: order-service
+        
+        ports:
+          - protocol: TCP
+            port: 8002
+
+  egress:
+      # Allow to RDS
+      - to:
+          - ipBlock:
+              cidr: 10.0.0.0/16
+
+        ports:
+          - protocol: TCP
+            port: 5432
+
+      # Allow DNS
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: kube-system
+        ports:
+          - protocol: UDP
+            ports: 53
