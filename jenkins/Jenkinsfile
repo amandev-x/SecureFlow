@@ -239,64 +239,51 @@ pipeline {
     }
 
         stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'app-server-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
-                        sh '''
-                          echo "Deploying to Kubernetes cluster..."
+    steps {
+        script {
+            withCredentials([sshUserPrivateKey(
+                credentialsId: 'app-server-ssh',
+                keyFileVariable: 'SSH_KEY',
+                usernameVariable: 'SSH_USER'
+            )]) {
+                sh """
+                    echo "Deploying to Kubernetes cluster..."
 
-                          ssh -T -i ${SSH_KEY} -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=30 ${SSH_USER}@${APP_SERVER_IP} << EOF
-set -e
-echo "Authenticating with ECR..."
-aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-echo "Navigating to SecureFlow directory..."
-if [ -d /home/ubuntu/SecureFlow ]; then
-  cd /home/ubuntu/SecureFlow
-elif [ -d /home/ubuntu/Secureflow ]; then
-  cd /home/ubuntu/Secureflow
-elif [ -d /home/ec2-user/SecureFlow ]; then
-  cd /home/ec2-user/SecureFlow
-elif [ -d /home/ec2-user/Secureflow ]; then
-  cd /home/ec2-user/Secureflow
-else
-  echo "SecureFlow directory not found on remote host."
-  echo "Available home directories:"
-  ls -la /home || true
-  exit 1
-fi
-echo "Pulling latest changes..."
-git pull origin main
-echo "Updating deployment manifests with image tag: ${GIT_SHA}..."
-find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:${GIT_SHA}|g"
-echo "Applying Kubernetes manifests..."
-kubectl apply -f k8s/namespace.yml
-kubectl apply -f k8s/secrets/app-secrets.yml
-kubectl apply -f k8s/user-service/
-kubectl apply -f k8s/product-service/
-kubectl apply -f k8s/order-service/
-kubectl apply -f k8s/notification-service/
-kubectl apply -f k8s/api-gateway/
-# rollout restart
-kubectl rollout restart deployment -n secureflow
-# wait for rollout
-kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
-echo "Deployment complete"
-EOF
-                        '''
-                    }
-                }
-            }
-
-            post {
-                failure {
-                    echo "Deployment to Kubernetes failed"
-                }
-
-                success {
-                    echo "Successfully deployed to Kubernetes"
-                }
+                    ssh -i \$SSH_KEY \
+                        -o StrictHostKeyChecking=no \
+                        -o ConnectTimeout=30 \
+                        \$SSH_USER@${APP_SERVER_IP} \
+                        'set -e
+                        echo "Connected to app server"
+                        echo "Current user: \$(whoami)"
+                        echo "Home dir: \$(echo \$HOME)"
+                        ls -la /home/ubuntu/
+                        cd /home/ubuntu/SecureFlow
+                        git pull origin main
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        kubectl apply -f k8s/namespace.yml
+                        kubectl apply -f k8s/secrets/app-secrets.yml
+                        kubectl apply -f k8s/user-service/
+                        kubectl apply -f k8s/product-service/
+                        kubectl apply -f k8s/order-service/
+                        kubectl apply -f k8s/notification-service/
+                        kubectl apply -f k8s/api-gateway/
+                        kubectl rollout restart deployment -n secureflow
+                        kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
+                        echo "Deployment complete"'
+                """
             }
         }
+    }
+    post {
+        failure {
+            echo "Deployment to Kubernetes failed"
+        }
+        success {
+            echo "Successfully deployed to Kubernetes"
+        }
+    }
+}
 
         stage('Health Check') {
         steps {
