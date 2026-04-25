@@ -288,6 +288,11 @@ pipeline {
                                     kubectl apply -f k8s/api-gateway/
                                     kubectl rollout restart deployment -n secureflow
                                     kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/product-service-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/order-service-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/notification-service-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/notification-worker-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
                                     echo 'Deployment complete'"
                                 """
                                 }
