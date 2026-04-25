@@ -250,7 +250,7 @@ set -e
 echo "Authenticating with ECR..."
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 echo "Navigating to Secureflow directory..."
-cd ${APP_HOME}
+cd /home/ubuntu/SecureFlow
 echo "Pulling latest changes..."
 git pull origin main
 echo "Updating deployment manifests with image tag: ${GIT_SHA}..."
