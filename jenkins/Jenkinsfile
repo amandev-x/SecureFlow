@@ -93,7 +93,7 @@ pipeline {
 
               echo "Running safety dependency scan"
 
-              for service in user-service product-service order-service api-gateway notification-service; do
+              for service in user-services product-services order-services api-gateway notification-services; do
                 echo "Scanning $service dependencies..."
                 
                 python3 -m safety check -r services/$service/requirements.txt --json -o safety-$service-report.json || true
