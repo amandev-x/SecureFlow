@@ -16,6 +16,8 @@ spec:
       labels:
         app: notification-worker
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
         - name: notification-worker
           image: 066606187609.dkr.ecr.ap-south-1.amazonaws.com/secureflow/notification-service:latest
