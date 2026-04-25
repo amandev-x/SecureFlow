@@ -245,8 +245,7 @@ pipeline {
                 credentialsId: 'app-server-ssh',
                 keyFileVariable: 'SSH_KEY',
                 usernameVariable: 'SSH_USER'
-            )])
-             {
+            )]) {
                 sh """
                     echo "Deploying to Kubernetes cluster..."
 
@@ -267,7 +266,7 @@ pipeline {
                         --docker-server=066606187609.dkr.ecr.ap-south-1.amazonaws.com \
                         --docker-username=AWS \
                         --docker-password=$(aws ecr get-login-password --region ap-south-1) \
-                        --namespace=secureflow --dry-run=client -o yaml | kubectl apply -f -
+                        --namespace=secureflow
                         kubectl apply -f k8s/secrets/app-secrets.yml
                         kubectl apply -f k8s/user-service/
                         kubectl apply -f k8s/product-service/
