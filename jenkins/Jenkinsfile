@@ -179,7 +179,7 @@ pipeline {
                             echo "Scanning ${service}..."
 
                             trivy image \
-                                -- quiet \
+                                --quiet \
                                 --format json \
                                 --output trivy-${service}-report.json \
                                 --severity LOW,MEDIUM,HIGH,CRITICAL \
@@ -195,11 +195,6 @@ pipeline {
         always {
             archiveArtifacts artifacts: 'trivy-*-report.json', allowEmptyArchive: true
 
-        }
-        
-        failure {
-            error "Trivy found CRITICAL CVEs! Pipeline stopped."
-            
         }
         
         }
