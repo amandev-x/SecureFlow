@@ -245,8 +245,11 @@ pipeline {
                 credentialsId: 'app-server-ssh',
                 keyFileVariable: 'SSH_KEY',
                 usernameVariable: 'SSH_USER'
-            )]) {
+            ), file(credentialsId: 'app-secrets-file', variable: 'APP_SECRETS')])
+             {
                 sh """
+                    # Copy secrets file to app server
+                    scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$APP_SECRETS \$SSH_USER@${APP_SERVER_IP}:/home/ubuntu/SecureFlow/k8s/secrets/app-secrets.yml
                     echo "Deploying to Kubernetes cluster..."
 
                     ssh -i \$SSH_KEY \
@@ -262,6 +265,11 @@ pipeline {
                         git pull origin main
                         aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                         kubectl apply -f k8s/namespace.yml
+                        kubectl create secret docker-registry ecr-secret \
+                        --docker-server=066606187609.dkr.ecr.ap-south-1.amazonaws.com \
+                        --docker-username=AWS \
+                        --docker-password=$(aws ecr get-login-password --region ap-south-1) \
+                        --namespace=secureflow --dry-run=client -o yaml | kubectl apply -f -
                         kubectl apply -f k8s/secrets/app-secrets.yml
                         kubectl apply -f k8s/user-service/
                         kubectl apply -f k8s/product-service/
