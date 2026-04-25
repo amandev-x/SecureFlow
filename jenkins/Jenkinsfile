@@ -273,6 +273,8 @@ pipeline {
                                     --namespace=secureflow \
                                     --dry-run=client -o yaml | kubectl apply -f -
                                     kubectl apply -f k8s/secrets/app-secret.yml
+                                    kubectl apply -f k8s/rbac/
+                                    kubectl apply -f k8s/network-policies/
                                     kubectl apply -f k8s/user-service/
                                     kubectl apply -f k8s/product-service/
                                     kubectl apply -f k8s/order-service/
