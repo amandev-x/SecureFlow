@@ -27,7 +27,7 @@ module "ec2" {
   project_name          = var.project_name
   environment           = var.environment
   app_instance_type     = "m7i-flex.large"
-  jenkins_instance_type = "t3.small"
+  jenkins_instance_type = "m7i-flex.large"
   public_subnet_id      = module.vpc.public_subnet_ids[0]
   app_server_sg_id      = module.security-groups.app_server_sg_id
   jenkins_sg_id         = module.security-groups.jenkins_sg_id
