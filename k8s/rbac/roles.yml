@@ -1,0 +1,25 @@
+# Read only role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role 
+metadata:
+  name: secret-reader
+  namespace: secureflow
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs: ["get", "list"]
+
+---
+
+# Health check role - Pod status
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role 
+metadata:
+  name: pod-reader
+  namespace: secureflow
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+    
