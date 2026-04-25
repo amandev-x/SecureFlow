@@ -16,6 +16,7 @@ spec:
       labels:
         app: product-service
     spec:
+      serviceAccountName: product-service-sa
       imagePullSecrets:
         - name: ecr-secret
       containers:
