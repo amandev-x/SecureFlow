@@ -88,7 +88,7 @@ pipeline {
         stage('Safety Dependency Scan') {
         steps {
             sh '''
-              pip3 install --user safety --quiet
+              pip3 install --user "safety==2.3.5" --quiet
               export PATH=$PATH:$(python3 -m site --user-base)/bin
 
               echo "Running safety dependency scan"
@@ -96,7 +96,7 @@ pipeline {
               for service in user-services product-services order-services api-gateway notification-services; do
                 echo "Scanning $service dependencies..."
                 
-                python3 -m safety scan -r services/$service/requirements.txt --output json > safety-$service-report.json || true
+                python3 -m safety check -r services/$service/requirements.txt --json --output safety-$service-report.json || true
               done
 
               echo "Dependency scan complete"
