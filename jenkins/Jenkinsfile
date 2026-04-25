@@ -245,11 +245,9 @@ pipeline {
                 credentialsId: 'app-server-ssh',
                 keyFileVariable: 'SSH_KEY',
                 usernameVariable: 'SSH_USER'
-            ), file(credentialsId: 'app-secrets-file', variable: 'APP_SECRETS')])
+            )])
              {
                 sh """
-                    # Copy secrets file to app server
-                    scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$APP_SECRETS \$SSH_USER@${APP_SERVER_IP}:/home/ubuntu/SecureFlow/k8s/secrets/app-secrets.yml
                     echo "Deploying to Kubernetes cluster..."
 
                     ssh -i \$SSH_KEY \
