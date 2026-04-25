@@ -1,0 +1,83 @@
+# Bind secret reader to all secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: user-service-secret-reader
+  namespace: secureflow
+subjects:
+  - kind: ServiceAccount
+    name: user-service-sa
+    namespace: secureflow
+
+roleRef:
+  kind: Role 
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: product-service-secret-reader
+  namespace: secureflow
+subjects:
+  - kind: ServiceAccount
+    name: product-service-sa
+    namespace: secureflow 
+
+roleRef:
+  kind: Role 
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: order-service-secret-reader
+  namespace: secureflow
+subjects:
+  - kind: ServiceAccount
+    name: order-service-sa
+    namespace: secureflow
+
+roleRef:
+  kind: Role 
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: notification-service-secret-reader
+  namespace: secureflow
+subjects:
+  - kind: ServiceAccount
+    name: notification-service-sa
+    namespace: secureflow
+
+roleRef:
+  kind: Role 
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-gateway-secret-reader
+  namespace: secureflow
+subjects:
+  - kind: ServiceAccount
+    name: api-gateway-sa
+    namespace: secureflow
+
+roleRef:
+  kind: Role 
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
