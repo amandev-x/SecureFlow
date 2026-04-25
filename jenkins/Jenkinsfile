@@ -265,9 +265,11 @@ pipeline {
                                     else
                                         echo "Repo not found, cloning..."
                                         git clone https://https://github.com/amandev-x/SecureFlow.git /home/ubuntu/SecureFlow
-                                    fi
+                                    fi'
                                     scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$APP_SECRETS \
                                       \$SSH_USER@${APP_SERVER_IP}:/home/ubuntu/SecureFlow/k8s/secrets/app-secret.yml
+                                    ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${APP_SERVER_IP} \
+                                    "set -e
                                     aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                                     # create ECR pull secret
                                     kubectl apply -f k8s/namespace.yml
@@ -285,7 +287,7 @@ pipeline {
                                     kubectl apply -f k8s/api-gateway/
                                     kubectl rollout restart deployment -n secureflow
                                     kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
-                                    echo "Deployment complete"'
+                                    echo 'Deployment complete'"
                                 """
                                 }
                         }
