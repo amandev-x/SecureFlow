@@ -15,6 +15,7 @@ spec:
       labels:
         app: notification-service
     spec:
+      serviceAccountName: notification-service-sa
       imagePullSecrets:
         - name: ecr-secret
       containers:

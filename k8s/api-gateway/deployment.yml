@@ -16,6 +16,7 @@ spec:
       labels:
         app: api-gateway
     spec:
+      serviceAccountName: api-gateway-sa
       imagePullSecrets:
         - name: ecr-secret
       containers:
