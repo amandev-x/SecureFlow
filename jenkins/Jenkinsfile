@@ -272,6 +272,7 @@ pipeline {
                                     "set -e
                                     aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                                     # create ECR pull secret
+                                    cd /home/ubuntu/SecureFlow
                                     kubectl apply -f k8s/namespace.yml
                                     kubectl create secret docker-registry ecr-secret \
                                     --docker-server=${ECR_REGISTRY} \
