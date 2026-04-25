@@ -96,7 +96,7 @@ pipeline {
               for service in user-services product-services order-services api-gateway notification-services; do
                 echo "Scanning $service dependencies..."
                 
-                python3 -m safety check -r services/$service/requirements.txt --json --output safety-$service-report.json || true
+                python3 -m safety check -r services/$service/requirements.txt --output json > safety-$service-report.json || true
               done
 
               echo "Dependency scan complete"
