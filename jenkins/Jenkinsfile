@@ -88,14 +88,15 @@ pipeline {
         stage('Safety Dependency Scan') {
         steps {
             sh '''
-              pip3 install safety --quiet
+              pip3 install --user safety --quiet
+              export PATH=$PATH:$(python3 -m site --user-base)/bin
 
               echo "Running safety dependency scan"
 
               for service in user-service product-service order-service api-gateway notification-service; do
                 echo "Scanning $service dependencies..."
                 
-                safety check -r services/$service/requirements.txt --json -o safety-$service-report.json || true
+                python3 -m safety check -r services/$service/requirements.txt --json -o safety-$service-report.json || true
               done
 
               echo "Dependency scan complete"
@@ -178,15 +179,11 @@ pipeline {
                             echo "Scanning ${service}..."
 
                             trivy image \
+                                -- quiet \
                                 --format json \
                                 --output trivy-${service}-report.json \
                                 --severity LOW,MEDIUM,HIGH,CRITICAL \
-                                ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
-
-                            # fail pipeline if CRITICAL CVEs found
-                            trivy image \
                                 --exit-code 1 \
-                                --severity CRITICAL \
                                 ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
 
                             echo "${service} passed Trivy scan"
