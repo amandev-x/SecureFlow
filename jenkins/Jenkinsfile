@@ -17,6 +17,7 @@ pipeline {
         PROJECT_NAME    =   "secureflow"
         APP_SERVER_IP   =   "10.0.1.166"
         CLUSTER_NAME    =   "secureflow"
+        APP_HOME        =   "/home/ubuntu/SecureFlow"
     }
 
     stages {
@@ -249,7 +250,7 @@ set -e
 echo "Authenticating with ECR..."
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 echo "Navigating to Secureflow directory..."
-cd /home/ubuntu/SecureFlow
+cd ${APP_HOME}
 echo "Pulling latest changes..."
 git pull origin main
 echo "Updating deployment manifests with image tag: ${GIT_SHA}..."
