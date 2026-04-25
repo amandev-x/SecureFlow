@@ -43,7 +43,7 @@ resource "aws_instance" "jenkins" {
   vpc_security_group_ids = [var.jenkins_sg_id]
   iam_instance_profile   = aws_iam_instance_profile.jenkins_profile.name
   root_block_device {
-    volume_size = 10
+    volume_size = 15
     volume_type = "gp3"
     encrypted   = true
   }
