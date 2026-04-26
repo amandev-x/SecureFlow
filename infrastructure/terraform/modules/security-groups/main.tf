@@ -210,20 +210,9 @@ resource "aws_vpc_security_group_egress_rule" "elasticache_egress" {
   }
 }
 
-# Prometheus Security Group
-resource "aws_security_group" "prometheus_sg" {
-  name        = "${var.project_name}-prometheus-sg"
-  description = "Security group for Prometheus"
-  vpc_id      = var.vpc_id
-
-  tags = {
-    Name        = "${var.project_name}-prometheus-sg"
-    Environment = var.environment
-  }
-}
-
+# ──── Prometheus ───────────────────────────────────────────────
 resource "aws_vpc_security_group_ingress_rule" "prometheus_ingress" {
-  security_group_id = aws_security_group.prometheus_sg.id
+  security_group_id = aws_security_group.app_server.id 
   ip_protocol       = "tcp"
   from_port         = 9090
   to_port           = 9090
@@ -235,20 +224,9 @@ resource "aws_vpc_security_group_ingress_rule" "prometheus_ingress" {
   }
 }
 
-# Grafana Security Group
-resource "aws_security_group" "grafana_sg" {
-  name        = "${var.project_name}-grafana-sg"
-  description = "Security group for Grafana"
-  vpc_id      = var.vpc_id
-
-  tags = {
-    Name        = "${var.project_name}-grafana-sg"
-    Environment = var.environment
-  }
-}
-
+# ───── Grafana ───────────────────────────────────────────────
 resource "aws_vpc_security_group_ingress_rule" "grafana_ingress" {
-  security_group_id = aws_security_group.grafana_sg.id
+  security_group_id = aws_security_group.app_server.id
   ip_protocol       = "tcp"
   from_port         = 3000
   to_port           = 3000
@@ -260,24 +238,14 @@ resource "aws_vpc_security_group_ingress_rule" "grafana_ingress" {
   }
 }
 
-# AlertManager Security Group
-resource "aws_security_group" "alertmanager_sg" {
-  name        = "${var.project_name}-alertmanager-sg"
-  description = "Security group for AlertManager"
-  vpc_id      = var.vpc_id
 
-  tags = {
-    Name        = "${var.project_name}-alertmanager-sg"
-    Environment = var.environment
-  }
-}
-
+# ───── Alertmanager ───────────────────────────────────────────────
 resource "aws_vpc_security_group_ingress_rule" "alertmanager_ingress" {
-  security_group_id = aws_security_group.alertmanager_sg.id
+  security_group_id = aws_security_group.app_server.id 
   ip_protocol       = "tcp"
   from_port         = 9093
   to_port           = 9093
-  cidr_ipv4         = var.my_ip
+  cidr_ipv4         = "0.0.0.0/0"
 
   tags = {
     Name        = "${var.project_name}-alertmanager-ingress"
