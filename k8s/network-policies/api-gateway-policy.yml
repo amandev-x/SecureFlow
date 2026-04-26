@@ -14,7 +14,8 @@ spec:
   ingress:
     - from:
         - namespaceSelector:
-            kubernetes.io/metadata.name: ingress-nginx
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
       ports:
         - protocol: TCP
           port: 8000
