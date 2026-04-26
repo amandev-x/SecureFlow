@@ -268,7 +268,7 @@ pipeline {
                                     cd /home/ubuntu/SecureFlow
                                     GIT_SHA=\$(git rev-parse --short HEAD)
                                     echo "Deploying Version: \$GIT_SHA"
-                                    find k8s/ -name "deployment*.yml" -type f -exec sed -i "s|:latest|:$GIT_SHA|g" {} +
+                                    find k8s/ -name "deployment*.yml" -type f -print0 | xargs -0 sed -i "s|:latest|:\$GIT_SHA|g"
                                     kubectl apply -f k8s/namespace.yml
                                     kubectl create secret docker-registry ecr-secret \
                                     --docker-server=${ECR_REGISTRY} \
@@ -285,7 +285,7 @@ pipeline {
                                     kubectl apply -f k8s/notification-service/
                                     kubectl apply -f k8s/api-gateway/
                                     kubectl apply -f k8s/ingress.yml
-                                    find k8s/ -name "deployment*.yml" -type f -exec sed -i "s|:$GIT_SHA|:latest|g" {} +
+                                    find k8s/ -name "deployment*.yml" -type f -print0 | xargs -0 sed -i "s|:\$GIT_SHA|:latest|g"
                                     for deploy in api-gateway-deployment user-service-deployment product-service-deployment order-service-deployment notification-service-deployment notification-worker-deployment; do
                                         kubectl rollout status deployment/\$deploy -n secureflow --timeout=120s
                                     done
