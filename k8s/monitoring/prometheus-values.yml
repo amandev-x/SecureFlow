@@ -73,7 +73,7 @@ grafana:
 
   # Default dashboards
   defaultDashboardsEnabled: true
-  defaultDashboardsTimezone: true
+  defaultDashboardsTimezone: UTC
 
 
 # Alertmanager configuration
