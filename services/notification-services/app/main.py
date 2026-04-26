@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from celery.result import AsyncResult
 from app.celery_app import celery_app
 from app.tasks import send_order_confirmation, send_cancellation_order
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(title="Notification Service", version="1.0.0")
 
@@ -13,6 +14,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Exposing metrics for notification-service service
+Instrumentator().instrument(app).expose(app)
 
 @app.get("/health")
 def health():

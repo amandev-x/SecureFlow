@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routes.users import router as user_router
 from .database import engine, Base
+from prometheus_fastapi_instrumentator import Instrumentator
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,6 +20,9 @@ app.add_middleware(
 )
 
 app.include_router(user_router)
+
+# Expose metrics for user-service service
+Instrumentator().instrument(app).expose(app)
 
 @app.get("/health")
 def health():
