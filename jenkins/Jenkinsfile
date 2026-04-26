@@ -285,11 +285,11 @@ pipeline {
                                     kubectl apply -f k8s/notification-service/
                                     kubectl apply -f k8s/api-gateway/
                                     kubectl apply -f k8s/ingress.yml
-                                    find k8s/ -name "deployment*.yml" | xargs sed -i "s|\$GIT_SHA|:latest|g"
+                                    find k8s/ -name "deployment*.yml" -type f -exec sed -i "s|:\$GIT_SHA|:latest|g" {} +
                                     for deploy in api-gateway-deployment user-service-deployment product-service-deployment order-service-deployment notification-service-deployment notification-worker-deployment; do
                                         kubectl rollout status deployment/\$deploy -n secureflow --timeout=120s
                                     done
-                                    find k8s/ -name "deployment*.yml" | xargs sed -i "s|:\$GIT_SHA|:latest|g"
+                                    find k8s/ -name "deployment*.yml" -type f -exec sed -i "s|:\$GIT_SHA|:latest|g" {} +
                                     echo 'Deployment complete'"
                                 """
                                 }
