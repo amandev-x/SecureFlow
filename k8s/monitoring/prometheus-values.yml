@@ -46,7 +46,9 @@ prometheus:
 
   service:
     type: NodePort
-    port: 30090
+    port: 9090
+    targetPort: 9090
+    nodePort: 30090
 
 
 # Grafana configuration
@@ -55,7 +57,9 @@ grafana:
 
   service:
     type: NodePort
-    port: 30030
+    port: 3000
+    targetPort: 3000
+    nodePort: 30030
 
   # Resource limits
   resources:
@@ -86,7 +90,9 @@ alertmanager:
 
   service:
     type: NodePort
-    port: 30093
+    port: 9093
+    targetPort: 9093
+    nodePort: 30093
 
 
 # Node exporter configuration
