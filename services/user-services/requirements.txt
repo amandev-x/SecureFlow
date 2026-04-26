@@ -8,3 +8,4 @@ argon2-cffi
 python-dotenv
 alembic
 python-multipart
+prometheus-fastapi-instrumentator

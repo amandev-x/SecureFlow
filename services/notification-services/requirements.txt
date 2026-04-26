@@ -3,3 +3,4 @@ uvicorn[standard]
 celery
 redis
 python-dotenv
+prometheus-fastapi-instrumentator
