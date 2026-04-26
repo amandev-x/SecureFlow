@@ -245,7 +245,7 @@ resource "aws_vpc_security_group_ingress_rule" "alertmanager_ingress" {
   ip_protocol       = "tcp"
   from_port         = 9093
   to_port           = 9093
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = var.my_ip
 
   tags = {
     Name        = "${var.project_name}-alertmanager-ingress"
