@@ -209,3 +209,78 @@ resource "aws_vpc_security_group_egress_rule" "elasticache_egress" {
     Environment = var.environment
   }
 }
+
+# Prometheus Security Group
+resource "aws_security_group" "prometheus_sg" {
+  name = "${var.project_name}-prometheus-sg"
+  description = "Security group for Prometheus"
+  vpc_id = var.vpc_id
+
+  tags = {
+    Name = "${var.project_name}-prometheus-sg"
+    Environment = var.environment
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "prometheus_ingress" {
+  security_group_id = aws_security_group.prometheus_sg.id
+  ip_protocol = "tcp"
+  from_port = 9090
+  to_port = 9090
+  cidr_ipv4 = [var.my_ip]
+
+  tags = {
+    Name = "${var.project_name}-prometheus-ingress"
+    Environment = var.environment
+  }
+}
+
+# Grafana Security Group
+resource "aws_security_group" "grafana_sg" {
+  name = "${var.project_name}-grafana-sg"
+  description = "Security group for Grafana"
+  vpc_id = var.vpc_id
+
+  tags = {
+    Name = "${var.project_name}-grafana-sg"
+    Environment = var.environment
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "grafana_ingress" {
+  security_group_id = aws_security_group.grafana_sg.id 
+  ip_protocol = "tcp"
+  from_port = 3000
+  to_port = 3000
+  cidr_ipv4 = [var.my_ip]
+
+  tags = {
+    Name = "${var.project_name}-grafana-ingress"
+    Environment = var.environment
+  }
+}
+
+# AlertManager Security Group
+resource "aws_security_group" "alertmanager_sg" {
+  name = "${var.project_name}-alertmanager-sg"
+  description = "Security group for AlertManager"
+  vpc_id = var.vpc_id
+
+  tags = {
+    Name = "${var.project_name}-alertmanager-sg"
+    Environment = var.environment
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "alertmanager_ingress" {
+  security_group_id = aws_security_group.alertmanager_sg.id 
+  ip_protocol = "tcp"
+  from_port = 9093
+  to_port = 9093
+  cidr_ipv4 = [var.my_ip]
+
+  tags = {
+    Name = "${var.project_name}-alertmanager-ingress"
+    Environment = var.environment
+  }
+}
