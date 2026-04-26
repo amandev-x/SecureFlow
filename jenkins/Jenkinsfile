@@ -284,9 +284,12 @@ pipeline {
                                     kubectl apply -f k8s/notification-service/
                                     kubectl apply -f k8s/api-gateway/
                                     kubectl apply -f k8s/ingress.yml
-                                    for deploy in api-gateway-deployment user-service-deployment product-service-deployment order-service-deployment notification-service-deployment notification-worker-deployment; do
-                                        kubectl rollout status deployment/\$deploy -n secureflow --timeout=120s
-                                    done
+                                    kubectl rollout status deployment/user-service-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/product-service-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/order-service-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/notification-service-deployment -n secureflow --timeout=120s
+                                    kubectl rollout status deployment/notification-worker-deployment -n secureflow --timeout=120s
                                     echo 'Deployment complete'"
                                 """
                                 }
