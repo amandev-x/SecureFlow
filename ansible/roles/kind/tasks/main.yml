@@ -76,6 +76,19 @@
               hostPort: 8000
               listenAddress: "0.0.0.0"
               protocol: TCP
+            - containerPort: 30090
+              hostPort: 9090  # Prometheus ui
+              listenAddress: "0.0.0.0"
+              protocol: TCP
+            - containerPort: 30030
+              hostPort: 3000  # Grafana ui
+              listenAddress: "0.0.0.0"
+              protocol: TCP
+            - containerPort: 30093
+              hostPort: 9093  # Alertmanager ui
+              listenAddress: "0.0.0.0"
+              protocol: TCP
+             
 
 - name: Check if Kind cluster already exists
   command: kind get clusters
