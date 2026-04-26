@@ -312,7 +312,7 @@ pipeline {
               sleep 10
 
               for i in 1 2 3 4 5; do 
-                STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://${APP_SERVER_IP}:/health)
+                STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://${APP_SERVER_IP}/health)
 
                 if [ "\$STATUS" = "200" ]; then 
                   echo "Health check passed. Api gateway is up"
