@@ -268,7 +268,7 @@ pipeline {
                                     cd /home/ubuntu/SecureFlow
                                     GIT_SHA=\$(git rev-parse --short HEAD)
                                     echo "Deploying Version: \$GIT_SHA"
-                                    find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:\$GIT_SHA|g"
+                                    find k8s/ -name "deployment*.yml" -type f -exec sed -i "s|:latest|:\$GIT_SHA|g" {} +
                                     kubectl apply -f k8s/namespace.yml
                                     kubectl create secret docker-registry ecr-secret \
                                     --docker-server=${ECR_REGISTRY} \
