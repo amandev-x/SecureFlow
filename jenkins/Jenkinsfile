@@ -266,8 +266,9 @@ pipeline {
                                     aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                                     # create ECR pull secret
                                     cd /home/ubuntu/SecureFlow
-                                    GIT_SHA = (git rev-parse --short HEAD)
-                                    find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:${env.GIT_SHA}|g"
+                                    GIT_SHA=\$(git rev-parse --short HEAD)
+                                    echo "Deploying Version: \$GIT_SHA"
+                                    find k8s/ -name "deployment*.yml" | xargs sed -i "s|:latest|:\$GIT_SHA|g"
                                     kubectl apply -f k8s/namespace.yml
                                     kubectl create secret docker-registry ecr-secret \
                                     --docker-server=${ECR_REGISTRY} \
@@ -284,14 +285,11 @@ pipeline {
                                     kubectl apply -f k8s/notification-service/
                                     kubectl apply -f k8s/api-gateway/
                                     kubectl apply -f k8s/ingress.yml
-                                    find k8s/ - name "deployment*.yml" | xargs sed -i "s|${GIT_SHA}|:latest|g"
-                                    kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/user-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/product-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/order-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/notification-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/notification-worker-deployment -n secureflow --timeout=120s
-                                    find k8s/ - name "deployment*.yml" | xargs sed -i "s|${GIT_SHA}|:latest|g"
+                                    find k8s/ -name "deployment*.yml" | xargs sed -i "s|\$GIT_SHA|:latest|g"
+                                    for deploy in api-gateway-deployment user-service-deployment product-service-deployment order-service-deployment notification-service-deployment notification-worker-deployment; do
+                                        kubectl rollout status deployment/\$deploy -n secureflow --timeout=120s
+                                    done
+                                    find k8s/ - name "deployment*.yml" | xargs sed -i "s|\$GIT_SHA|:latest|g"
                                     echo 'Deployment complete'"
                                 """
                                 }
