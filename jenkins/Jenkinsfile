@@ -248,7 +248,7 @@ pipeline {
                         file(credentialsId: 'app-secrets-file', variable: 'APP_SECRETS'),
                         string(credentialsId: 'grafana-admin-password', variable: 'GRAFANA_PASSWORD')]) {
                             def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-
+                            
                             // 1. LANDING ZONE: SCP to the home directory
                             sh '''
                               scp -i "${SSH_KEY}" -o StrictHostKeyChecking=no "${APP_SECRETS}" "${SSH_USER}@${APP_SERVER_IP}:/home/ubuntu/app-secrets.tmp"
@@ -264,7 +264,12 @@ if [ ! -d "/home/ubuntu/SecureFlow" ]; then
     echo "First time setup. Cloning the repo"
     git clone https://github.com/amandev-x/SecureFlow.git /home/ubuntu/SecureFlow
 fi
-
+ always {
+            // clean up Docker images to save disk space
+            sh """
+                docker image prune -f || true
+            """
+        }
 cd /home/ubuntu/SecureFlow
 
 # Pull the latest changes
@@ -309,7 +314,7 @@ helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
     --namespace ingress-nginx --create-namespace \
     --set controller.service.type=NodePort \
-    --set controller.service.nodePorts.http=30080 \
+    --set controller.service.nodePorts.http=30000 \
     --set controller.service.nodePorts.https=30001 \
     --wait || true
 
@@ -329,6 +334,12 @@ done
 
 echo "Deployment of ${gitSha} completed successfully!"
 find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitSha}|:latest|g" {} +
+
+
+echo "Cleaning up old Docker images on App Server..."
+docker image rmi $(docker images -q) || true
+docker system prune -f || true
+
 
 echo "Deleting app-secrets.tmp"
 rm -f /home/ubuntu/app-secrets.tmp
@@ -386,11 +397,5 @@ EOF
         }
         failure {
             echo " Pipeline failed — check logs above"
-        }
-        always {
-            // clean up Docker images to save disk space
-            sh """
-                docker image prune -f || true
-            """
         }
     }
