@@ -264,12 +264,7 @@ if [ ! -d "/home/ubuntu/SecureFlow" ]; then
     echo "First time setup. Cloning the repo"
     git clone https://github.com/amandev-x/SecureFlow.git /home/ubuntu/SecureFlow
 fi
- always {
-            // clean up Docker images to save disk space
-            sh """
-                docker image prune -f || true
-            """
-        }
+
 cd /home/ubuntu/SecureFlow
 
 # Pull the latest changes
@@ -280,7 +275,7 @@ git pull origin main
 find k8s/ -name "deployment*.yml" -exec sed -i "s|:latest|:${gitSha}|g" {} +
 
 # Docker Login
-aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+aws ecr get-login-password --region \${AWS_REGION} | docker login --username AWS --password-stdin \${ECR_REGISTRY}
 
 # Apply k8s namespace
 kubectl apply -f k8s/namespace.yml
@@ -290,8 +285,8 @@ kubectl create secret generic app-secrets --from-file=app-secrets.yml=/home/ubun
     -n secureflow --dry-run=client -o yaml | kubectl apply -f -
 
 # Create K8s secret for docker login
-kubectl create secret docker-registry ecr-secret --docker-server=${ECR_REGISTRY} \
-    --docker-username=AWS --docker-password=\$(aws ecr get-login-password --region ${AWS_REGION}) \
+kubectl create secret docker-registry ecr-secret --docker-server=\${ECR_REGISTRY} \
+    --docker-username=AWS --docker-password=\$(aws ecr get-login-password --region \${AWS_REGION}) \
     -n secureflow --dry-run=client -o yaml | kubectl apply -f -
 
 # Apply all manifests
@@ -324,7 +319,7 @@ helm repo update
 
 helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
     --namespace monitoring --create-namespace --values k8s/monitoring/prometheus-values.yml \
-    --set grafana.adminPassword=${GRAFANA_PASSWORD} \
+    --set grafana.adminPassword=\${GRAFANA_PASSWORD} \
     --wait || true
 
 # Smart rollback
@@ -333,11 +328,11 @@ for deploy in user-service product-service order-service notification-service ap
 done
 
 echo "Deployment of ${gitSha} completed successfully!"
-find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitSha}|:latest|g" {} +
+find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitSha}|:latest|g" \{\} +
 
 
 echo "Cleaning up old Docker images on App Server..."
-docker image rmi $(docker images -q) || true
+docker image rmi \$(docker images -q) || true
 docker system prune -f || true
 
 
