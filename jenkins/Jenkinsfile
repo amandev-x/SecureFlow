@@ -318,6 +318,7 @@ pipeline {
                                     done
 
                                     echo "Deployment of ${gitSha} completed successfully!"
+                                    find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitSha}|:latest|g" {} +
 
                                 EOF
                                     """
