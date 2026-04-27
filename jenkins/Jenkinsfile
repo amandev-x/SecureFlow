@@ -248,6 +248,7 @@ pipeline {
                         file(credentialsId: 'app-secrets-file', variable: 'APP_SECRETS'),
                         string(credentialsId: 'grafana-admin-password', variable: 'GRAFANA_PASSWORD')]) {
                             def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                            def gitShaPattern = ":${gitSha}"
                             
                             // 1. LANDING ZONE: SCP to the home directory
                             sh '''
@@ -272,7 +273,7 @@ git pull origin main
 
 
 # Image tag replacement
-find k8s/ -name "deployment*.yml" -exec sed -i "s|:latest|:${gitSha}|g" {} +
+find k8s/ -name "deployment*.yml" -exec sed -i "s|:latest|:${gitShaPattern}|g" {} +
 
 # Docker Login
 aws ecr get-login-password --region \${AWS_REGION} | docker login --username AWS --password-stdin \${ECR_REGISTRY}
@@ -327,8 +328,8 @@ for deploy in user-service product-service order-service notification-service ap
     kubectl rollout status deployment/\${deploy}-deployment -n secureflow --timeout=120s
 done
 
-echo "Deployment of ${gitSha} completed successfully!"
-find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitSha}|:latest|g" \{\} +
+echo "Deployment of ${gitShaPattern} completed successfully!"
+find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitShaPattern}|:latest|g" {} +
 
 
 echo "Cleaning up old Docker images on App Server..."
