@@ -1,6 +1,7 @@
-fastapi
-uvicorn[standard]
-celery
-redis
-python-dotenv
-prometheus-fastapi-instrumentator
+# fastapi
+fastapi[standard]==0.136.0
+# uvicorn[standard]
+celery==5.6.3
+redis>=6.0.0
+python-dotenv==1.2.2
+prometheus-fastapi-instrumentator==7.1.0
