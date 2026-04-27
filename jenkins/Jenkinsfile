@@ -251,7 +251,7 @@ pipeline {
 
                             // 1. LANDING ZONE: SCP to the home directory
                             sh '''
-                              scp -i "${SSH_KEY}" -o StrictHostKeyChecking=no "${APP_SECRETS}" "${SSH_USER}@${APP_SERVER_IP}:/tmp/app-secrets.tmp"
+                              scp -i "${SSH_KEY}" -o StrictHostKeyChecking=no "${APP_SECRETS}" "${SSH_USER}@${APP_SERVER_IP}:/ubuntu/app-secrets.tmp"
                             '''
 
                             // 2. REMOTE LOGIC
@@ -281,7 +281,7 @@ pipeline {
                                     kubectl apply -f k8s/namespace.yml
 
                                     # Create k8s secret
-                                    kubectl create secret generic app-secrets --from-file=app-secrets.yml=/tmp/app-secrets.tmp \
+                                    kubectl create secret generic app-secrets --from-file=app-secrets.yml=/ubuntu/app-secrets.tmp \
                                       -n secureflow --dry-run=client -o yaml | kubectl apply -f -
 
                                     # Create K8s secret for docker login
