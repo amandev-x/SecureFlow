@@ -325,16 +325,19 @@ pipeline {
                         } 
                                 }
                         }
-            }
-        post {
-            failure {
+                        }
+            post {
+                failure {
                 echo "Deployment to Kubernetes failed"
                 }
-            success {
-                echo "Successfully deployed to Kubernetes"
+                
+                success {
+                    echo "Successfully deployed to Kubernetes"
+                    }
+                
                 }
-                }
-                }
+            
+            }
 
         stage('Health Check') {
         steps {
