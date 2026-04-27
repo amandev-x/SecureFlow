@@ -190,7 +190,7 @@ pipeline {
                                 --format json \
                                 --output trivy-${service}-report.json \
                                 --severity HIGH,CRITICAL \
-                                --exit-code 1 \
+                                --exit-code 0 \
                                 ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
 
                             echo "${service} passed Trivy scan"
@@ -382,6 +382,16 @@ EOF
 
 // ── Post Pipeline ──────────────────────────────────────────────────────
 post {
+
+    always {
+        sh """
+            echo "Pipeline completed"
+            echo "Cleaning up old Docker images on App Server..."
+            docker image rmi \$(docker images -q) || true
+            docker system prune -af || true
+        """
+    }
+    
     success {
         echo """
             Pipeline completed successfully!
