@@ -59,7 +59,7 @@ prometheus:
 
 # Grafana configuration
 grafana:
-  adminPassword: "REMOVED_SECRET"
+  adminPassword: ""
 
   service:
     type: NodePort
