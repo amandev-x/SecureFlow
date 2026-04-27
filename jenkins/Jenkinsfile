@@ -378,20 +378,22 @@ EOF
             }
         }
     }
-}
+
 
 // ── Post Pipeline ──────────────────────────────────────────────────────
-    post {
-        success {
-            echo """
-             Pipeline completed successfully!
+post {
+    success {
+        echo """
+            Pipeline completed successfully!
             ─────────────────────────────────
             Branch  : ${env.GIT_BRANCH}
             Commit  : ${env.GIT_SHA}
             App URL : http://${APP_SERVER_IP}:8000
             """
-        }
+            }
+        
         failure {
             echo " Pipeline failed — check logs above"
         }
     }
+}
