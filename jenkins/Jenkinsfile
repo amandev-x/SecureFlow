@@ -251,7 +251,7 @@ pipeline {
 
                             // 1. LANDING ZONE: SCP to the home directory
                             sh '''
-                              "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no ${APP_SECRETS} ${SSH_USER}@${APP_SERVER_IP}:/tmp/app-secrets.tmp"
+                              scp -i "${SSH_KEY}" -o StrictHostKeyChecking=no "${APP_SECRETS}" "${SSH_USER}@${APP_SERVER_IP}:/tmp/app-secrets.tmp"
                             '''
 
                             // 2. REMOTE LOGIC
