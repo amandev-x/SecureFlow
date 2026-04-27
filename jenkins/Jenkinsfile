@@ -238,60 +238,90 @@ pipeline {
                         keyFileVariable: 'SSH_KEY',
                         usernameVariable: 'SSH_USER'
                         ),
-                        file(credentialsId: 'app-secrets-file', variable: 'APP_SECRETS')]) {
+                        file(credentialsId: 'app-secrets-file', variable: 'APP_SECRETS'),
+                        string(credentialsId: 'grafana-admin-password', variable: 'GRAFANA_PASSWORD')]) {
+                            def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+
+                            // 1. LANDING ZONE: SCP to the home directory
+                            sh "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no ${APP_SECRETS} ${SSH_USER}@${APP_SERVER_IP}:/home/ubuntu/app-secrets.tmp"
+
+                            // 2. REMOTE LOGIC
                             sh """
-                                echo "Deploying to Kubernetes cluster..."
+                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${APP_SERVER_IP} << 'EOF'
+                                    set -e
+                                    
+                                    # Check if directory exists. If not them clone it
+                                    if [ ! -d "/home/ubuntu/SecureFlow" ]; then
+                                        echo "First time setup. Cloning the repo"
+                                        git clone https://github.com/amandev-x/SecureFlow.git /home/ubuntu/SecureFlow
+                                    fi
 
-                                ssh -i \$SSH_KEY \
-                                    -o StrictHostKeyChecking=no \
-                                    -o ConnectTimeout=30 \
-                                    \$SSH_USER@${APP_SERVER_IP} \
-                                    'set -e
-                                    echo "Connected to app server"
-                                    echo "Current user: \$(whoami)"
-                                    echo "Home dir: \$(echo \$HOME)"
-                                    if [ -d "/home/ubuntu/SecureFlow/.git" ]; then
-                                        echo "Repo exists, pulling latest changes..."
-                                        cd /home/ubuntu/SecureFlow
-                                        git pull origin main
-
-                                    else
-                                        echo "Repo not found, cloning..."
-                                        git clone https://https://github.com/amandev-x/SecureFlow.git /home/ubuntu/SecureFlow
-                                    fi'
-                                    scp -i \$SSH_KEY -o StrictHostKeyChecking=no \$APP_SECRETS \
-                                      \$SSH_USER@${APP_SERVER_IP}:/home/ubuntu/SecureFlow/k8s/secrets/app-secret.yml
-                                    ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${APP_SERVER_IP} \
-                                    "set -e
-                                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-                                    # create ECR pull secret
                                     cd /home/ubuntu/SecureFlow
-                                    GIT_SHA=\$(git rev-parse --short HEAD)
-                                    echo "Deploying Version: \$GIT_SHA"
+
+                                    # Pull the latest changes
+                                    git pull origin main 
+
+                                    # Move the secret we just SCP-ed into the repo folder
+                                    mv /home/ubuntu/app-secrets.tmp /home/ubuntu/SecureFlow/k8s/secrets/app-secrets.yml
+
+                                    # Image tag replacement
+                                    find k8s/ -name "deployment*.yml" -exec sed -i "s|:latest|:${gitSha}|g" {} +
+
+                                    # Docker Login
+                                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+
+                                    # Apply k8s namespace
                                     kubectl apply -f k8s/namespace.yml
-                                    kubectl create secret docker-registry ecr-secret \
-                                    --docker-server=${ECR_REGISTRY} \
-                                    --docker-username=AWS \
-                                    --docker-password=\$(aws ecr get-login-password --region ap-south-1) \
-                                    --namespace=secureflow \
-                                    --dry-run=client -o yaml | kubectl apply -f -
+
+                                    # Create K8s secret
+                                    kubectl create secret docker-registry ecr-secret --docker-server=${ECR_REGISTRY} \
+                                      --docker-username=AWS --docker-password=\$(aws ecr get-login-password --region ${AWS_REGION}) \
+                                      -n secureflow --dry-run=client -o yaml | kubectl apply -f -
+
+                                    # Apply all manifests
                                     kubectl apply -f k8s/secrets/app-secret.yml
                                     kubectl apply -f k8s/rbac/
                                     kubectl apply -f k8s/network-policies/
-                                    kubectl apply -f k8s/user-service/
-                                    kubectl apply -f k8s/product-service/
-                                    kubectl apply -f k8s/order-service/
-                                    kubectl apply -f k8s/notification-service/
-                                    kubectl apply -f k8s/api-gateway/
+
+                                    # Apply all services
+                                    kubectl apply -f k8s/user-service
+                                    kubectl apply -f k8s/product-service
+                                    kubectl apply -f k8s/order-service
+                                    kubectl apply -f k8s/notification-service
+                                    kubectl apply -f k8s/api-gateway
                                     kubectl apply -f k8s/ingress.yml
-                                    kubectl rollout status deployment/user-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/product-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/order-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/api-gateway-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/notification-service-deployment -n secureflow --timeout=120s
-                                    kubectl rollout status deployment/notification-worker-deployment -n secureflow --timeout=120s
-                                    echo 'Deployment complete'"
-                                """
+
+                                    # Ensure nginx ingress is installed
+                                    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
+                                    helm repo update
+
+                                    # install if not exists, skip if already installed
+                                    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+                                        --namespace ingress-nginx --create-namespace \
+                                        --set controller.service.type=NodePort \
+                                        --set controller.service.nodePorts.http=30080 \
+                                        --set controller.service.nodePorts.https=30001 \
+                                        --wait || true
+
+                                    # Ensure monitoring is installed
+                                    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+                                    helm repo update
+
+                                    helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+                                      --namespace monitoring --create-namespace --values k8s/monitoring/prometheus-values.yml \
+                                      --set grafana.adminPassword=${GRAFANA_PASSWORD} \
+                                      --wait || true
+
+                                    # Smart rollback
+                                    for deploy in user-service product-service order-service notification-service api-gateway; do
+                                        kubectl rollout status deployment/\${deploy}-deployment -n secureflow --timeout=120s
+                                    done
+
+                                    echo "Deployment of ${gitSha} completed successfully!"
+
+                                EOF
+                                    """
+                        } 
                                 }
                         }
             }
