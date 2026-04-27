@@ -189,8 +189,8 @@ pipeline {
                                 --quiet \
                                 --format json \
                                 --output trivy-${service}-report.json \
-                                --severity LOW,MEDIUM,HIGH,CRITICAL \
-                                --exit-code 0 \
+                                --severity HIGH,CRITICAL \
+                                --exit-code 1 \
                                 ${ECR_REGISTRY}/${PROJECT_NAME}/${service}:${env.GIT_SHA}
 
                             echo "${service} passed Trivy scan"
@@ -334,7 +334,7 @@ find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitShaPattern}|:latest|g" {
 
 echo "Cleaning up old Docker images on App Server..."
 docker image rmi \$(docker images -q) || true
-docker system prune -f || true
+docker system prune -af || true
 
 
 echo "Deleting app-secrets.tmp"
