@@ -43,12 +43,12 @@ prometheus:
     # Resource limits for Prometheus pod
     resources:
       requests:
-        memory: "200Mi"
-        cpu: "200m"
+        memory: "512Mi"
+        cpu: "250m"
 
       limits:
-        memory: "400Mi"
-        cpu: "400m"
+        memory: "1000Mi"
+        cpu: "500m"
 
   service:
     type: NodePort
@@ -70,12 +70,12 @@ grafana:
   # Resource limits
   resources:
     requests:
-      memory: "128Mi"
+      memory: "256Mi"
       cpu: "100m"
 
     limits:
-      memory: "256Mi"
-      cpu: "200m"
+      memory: "512Mi"
+      cpu: "300m"
 
   # Default dashboards
   defaultDashboardsEnabled: true
