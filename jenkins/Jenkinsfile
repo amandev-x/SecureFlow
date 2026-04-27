@@ -256,82 +256,84 @@ pipeline {
 
                             // 2. REMOTE LOGIC
                             sh """
-                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${APP_SERVER_IP} << 'EOF'
-                                    set -e
+ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${APP_SERVER_IP} << 'EOF'
+set -e
                                     
-                                    # Check if directory exists. If not them clone it
-                                    if [ ! -d "/home/ubuntu/SecureFlow" ]; then
-                                        echo "First time setup. Cloning the repo"
-                                        git clone https://github.com/amandev-x/SecureFlow.git /home/ubuntu/SecureFlow
-                                    fi
+# Check if directory exists. If not them clone it
+if [ ! -d "/home/ubuntu/SecureFlow" ]; then
+    echo "First time setup. Cloning the repo"
+    git clone https://github.com/amandev-x/SecureFlow.git /home/ubuntu/SecureFlow
+fi
 
-                                    cd /home/ubuntu/SecureFlow
+cd /home/ubuntu/SecureFlow
 
-                                    # Pull the latest changes
-                                    git pull origin main 
+# Pull the latest changes
+git pull origin main 
 
 
-                                    # Image tag replacement
-                                    find k8s/ -name "deployment*.yml" -exec sed -i "s|:latest|:${gitSha}|g" {} +
+# Image tag replacement
+find k8s/ -name "deployment*.yml" -exec sed -i "s|:latest|:${gitSha}|g" {} +
 
-                                    # Docker Login
-                                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+# Docker Login
+aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
-                                    # Apply k8s namespace
-                                    kubectl apply -f k8s/namespace.yml
+# Apply k8s namespace
+kubectl apply -f k8s/namespace.yml
 
-                                    # Create k8s secret
-                                    kubectl create secret generic app-secrets --from-file=app-secrets.yml=/home/ubuntu/app-secrets.tmp \
-                                      -n secureflow --dry-run=client -o yaml | kubectl apply -f -
+# Create k8s secret
+kubectl create secret generic app-secrets --from-file=app-secrets.yml=/home/ubuntu/app-secrets.tmp \
+    -n secureflow --dry-run=client -o yaml | kubectl apply -f -
 
-                                    # Create K8s secret for docker login
-                                    kubectl create secret docker-registry ecr-secret --docker-server=${ECR_REGISTRY} \
-                                      --docker-username=AWS --docker-password=\$(aws ecr get-login-password --region ${AWS_REGION}) \
-                                      -n secureflow --dry-run=client -o yaml | kubectl apply -f -
+# Create K8s secret for docker login
+kubectl create secret docker-registry ecr-secret --docker-server=${ECR_REGISTRY} \
+    --docker-username=AWS --docker-password=\$(aws ecr get-login-password --region ${AWS_REGION}) \
+    -n secureflow --dry-run=client -o yaml | kubectl apply -f -
 
-                                    # Apply all manifests
-                                    kubectl apply -f k8s/rbac/
-                                    kubectl apply -f k8s/network-policies/
+# Apply all manifests
+kubectl apply -f k8s/rbac/
+kubectl apply -f k8s/network-policies/
 
-                                    # Apply all services
-                                    kubectl apply -f k8s/user-service
-                                    kubectl apply -f k8s/product-service
-                                    kubectl apply -f k8s/order-service
-                                    kubectl apply -f k8s/notification-service
-                                    kubectl apply -f k8s/api-gateway
-                                    kubectl apply -f k8s/ingress.yml
+# Apply all services
+kubectl apply -f k8s/user-service
+kubectl apply -f k8s/product-service
+kubectl apply -f k8s/order-service
+kubectl apply -f k8s/notification-service
+kubectl apply -f k8s/api-gateway
+kubectl apply -f k8s/ingress.yml
 
-                                    # Ensure nginx ingress is installed
-                                    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
-                                    helm repo update
+# Ensure nginx ingress is installed
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
+helm repo update
 
-                                    # install if not exists, skip if already installed
-                                    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
-                                        --namespace ingress-nginx --create-namespace \
-                                        --set controller.service.type=NodePort \
-                                        --set controller.service.nodePorts.http=30080 \
-                                        --set controller.service.nodePorts.https=30001 \
-                                        --wait || true
+# install if not exists, skip if already installed
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+    --namespace ingress-nginx --create-namespace \
+    --set controller.service.type=NodePort \
+    --set controller.service.nodePorts.http=30080 \
+    --set controller.service.nodePorts.https=30001 \
+    --wait || true
 
-                                    # Ensure monitoring is installed
-                                    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
-                                    helm repo update
+# Ensure monitoring is installed
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+helm repo update
 
-                                    helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-                                      --namespace monitoring --create-namespace --values k8s/monitoring/prometheus-values.yml \
-                                      --set grafana.adminPassword=${GRAFANA_PASSWORD} \
-                                      --wait || true
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+    --namespace monitoring --create-namespace --values k8s/monitoring/prometheus-values.yml \
+    --set grafana.adminPassword=${GRAFANA_PASSWORD} \
+    --wait || true
 
-                                    # Smart rollback
-                                    for deploy in user-service product-service order-service notification-service api-gateway; do
-                                        kubectl rollout status deployment/\${deploy}-deployment -n secureflow --timeout=120s
-                                    done
+# Smart rollback
+for deploy in user-service product-service order-service notification-service api-gateway; do
+    kubectl rollout status deployment/\${deploy}-deployment -n secureflow --timeout=120s
+done
 
-                                    echo "Deployment of ${gitSha} completed successfully!"
-                                    find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitSha}|:latest|g" {} +
+echo "Deployment of ${gitSha} completed successfully!"
+find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitSha}|:latest|g" {} +
 
-                                    EOF
-                                    """
+echo "Deleting app-secrets.tmp"
+rm -f /home/ubuntu/app-secrets.tmp
+EOF
+"""
                         }
                     }
             }
