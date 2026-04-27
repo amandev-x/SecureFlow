@@ -270,8 +270,6 @@ pipeline {
                                     # Pull the latest changes
                                     git pull origin main 
 
-                                    # Move the secret we just SCP-ed into the repo folder
-                                    mv /tmp/app-secrets.tmp /home/ubuntu/SecureFlow/k8s/secrets/app-secrets.yml
 
                                     # Image tag replacement
                                     find k8s/ -name "deployment*.yml" -exec sed -i "s|:latest|:${gitSha}|g" {} +
@@ -282,13 +280,16 @@ pipeline {
                                     # Apply k8s namespace
                                     kubectl apply -f k8s/namespace.yml
 
-                                    # Create K8s secret
+                                    # Create k8s secret
+                                    kubectl create secret generic app-secrets --from-file=app-secrets.yml=/tmp/app-secrets.tmp \
+                                      -n secureflow --dry-run=client -o yaml | kubectl apply -f -
+
+                                    # Create K8s secret for docker login
                                     kubectl create secret docker-registry ecr-secret --docker-server=${ECR_REGISTRY} \
                                       --docker-username=AWS --docker-password=\$(aws ecr get-login-password --region ${AWS_REGION}) \
                                       -n secureflow --dry-run=client -o yaml | kubectl apply -f -
 
                                     # Apply all manifests
-                                    kubectl apply -f k8s/secrets/app-secret.yml
                                     kubectl apply -f k8s/rbac/
                                     kubectl apply -f k8s/network-policies/
 
