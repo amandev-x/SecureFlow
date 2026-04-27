@@ -70,7 +70,7 @@ pipeline {
 
                export PATH="$HOME/bin/:$PATH"
 
-               gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 0
+               gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 1
             '''
         }
 
