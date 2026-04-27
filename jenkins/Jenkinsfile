@@ -322,44 +322,41 @@ pipeline {
 
                                 EOF
                                     """
-                        } 
-                                }
                         }
-                        }
+                    }
+            }
             post {
                 failure {
-                echo "Deployment to Kubernetes failed"
+                    echo "Deployment to Kubernetes failed"
                 }
-                
                 success {
                     echo "Successfully deployed to Kubernetes"
-                    }
-                
                 }
-            
             }
+        }
 
         stage('Health Check') {
-        steps {
-            sh """
-              echo "🔍 Running health checks..."
-              sleep 10
+            steps {
+                sh """
+                  echo "🔍 Running health checks..."
+                  sleep 10
 
-              for i in 1 2 3 4 5; do 
-                STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://${APP_SERVER_IP}/health)
+                  for i in 1 2 3 4 5; do 
+                    STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://${APP_SERVER_IP}/health)
 
-                if [ "\$STATUS" = "200" ]; then 
-                  echo "Health check passed. Api gateway is up"
-                  exit 0
-                fi 
+                    if [ "\$STATUS" = "200" ]; then 
+                      echo "Health check passed. Api gateway is up"
+                      exit 0
+                    fi 
 
-                echo "Attempt \$i failed (status: \$STATUS), retrying in 10s..."
-                sleep 5
-              done
+                    echo "Attempt \$i failed (status: \$STATUS), retrying in 10s..."
+                    sleep 5
+                  done
 
-              echo "Health check failed after 5 attempts"
-              exit 1
-            """
+                  echo "Health check failed after 5 attempts"
+                  exit 1
+                """
+            }
         }
     }
 }
