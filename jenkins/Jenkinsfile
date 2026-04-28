@@ -38,7 +38,6 @@ pipeline {
             steps {
                 sh '''
                   export PATH=$PATH:/var/lib/jenkins/.local/bin
-                  . venv/bin/activate
                   pip3 install bandit --quiet
                   echo "Running Bandit scan"
 
