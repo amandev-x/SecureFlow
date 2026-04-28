@@ -50,7 +50,7 @@ pipeline {
             steps {
                 sh '''
                   python3 -m venv venv
-                  // export PATH=$PATH:/var/lib/jenkins/.local/bin
+                  # export PATH=$PATH:/var/lib/jenkins/.local/bin
                   . venv/bin/activate
                   pip3 install bandit --quiet
                   echo "Running Bandit scan"
@@ -110,7 +110,7 @@ pipeline {
             sh '''
               . venv/bin/activate
               pip3 install --user "safety==2.3.5" --quiet
-              // export PATH=$PATH:$(python3 -m site --user-base)/bin
+              # export PATH=$PATH:$(python3 -m site --user-base)/bin
 
               echo "Running safety dependency scan"
 
