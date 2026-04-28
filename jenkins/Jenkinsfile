@@ -35,6 +35,22 @@ pipeline {
             }
         }
 
+        stage('Static Code Analysis') {
+            steps {
+                sh '''
+                  pip3 install ruff --quiet
+                  echo "Running Ruff linting"
+
+                  ruff check services/ --output-format json > ruff-report.json || true
+                '''
+            }
+
+            post {
+                always {
+                    archiveArtifacts artifacts: 'ruff-report.json', allowEmptyArchive: true
+                }
+            }
+        }
         stage('Bandit') {
             steps {
                 sh '''
@@ -117,6 +133,23 @@ pipeline {
         }
     }
 
+        stage('Infrastructure Scan') {
+            steps {
+                sh '''
+                  pip3 install checkov --quiet
+                  echo "Running Infrastructure scan"
+
+                  checkov -d infrastructure/terraform --framework terraform --output json \
+                    --output-file checkov-report.json --soft-fail true
+                '''
+            }
+
+            post {
+                always {
+                    archiveArtifacts artifacts: 'checkov-report.json', allowEmptyArchive: true
+                }
+            }
+        }
         stage('Docker Build') {
         steps {
                 script {
@@ -330,12 +363,6 @@ done
 
 echo "Deployment of ${gitShaPattern} completed successfully!"
 find k8s/ -name "deployment*.yml" -exec sed -i "s|:${gitShaPattern}|:latest|g" {} +
-
-
-echo "Cleaning up old Docker images on App Server..."
-docker image rmi \$(docker images -q) || true
-docker system prune -af || true
-
 
 echo "Deleting app-secrets.tmp"
 rm -f /home/ubuntu/app-secrets.tmp
