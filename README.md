@@ -24,7 +24,7 @@
 
 ## Architecture Diagram
 
-![Architecture](./docs/architecture.png)
+![Architecture](./assets/architecture.png)
 
 A production-grade DevSecOps platform built from scratch — featuring 5 Python microservices, a security-gated CI/CD pipeline, AWS infrastructure provisioned via Terraform, Kubernetes orchestration, and real-time monitoring with Prometheus and Grafana.
 
