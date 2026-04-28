@@ -109,7 +109,7 @@ pipeline {
         steps {
             sh '''
               . venv/bin/activate
-              pip3 install --user "safety==2.3.5" --quiet
+              pip3 install safety==2.3.5 --quiet
               # export PATH=$PATH:$(python3 -m site --user-base)/bin
 
               echo "Running safety dependency scan"
