@@ -34,10 +34,23 @@ pipeline {
                 echo "Code checked out from ${env.GIT_BRANCH}"
             }
         }
+        stage('Linting') {
+            steps {
+                sh '''
+                  python3 -m venv venv 
+                  source venv/bin/activate
+                  pip3 install ruff --quiet
+                  echo "Running Ruff linting"
+                  ruff check services/ --output-format json > ruff-report.json
+                '''
+            }
+        }
         stage('Bandit') {
             steps {
                 sh '''
-                  export PATH=$PATH:/var/lib/jenkins/.local/bin
+                  python3 -m venv venv
+                  // export PATH=$PATH:/var/lib/jenkins/.local/bin
+                  source venv/bin/activate
                   pip3 install bandit --quiet
                   echo "Running Bandit scan"
 
@@ -94,8 +107,9 @@ pipeline {
         stage('Safety Dependency Scan') {
         steps {
             sh '''
+              source venv/bin/activate
               pip3 install --user "safety==2.3.5" --quiet
-              export PATH=$PATH:$(python3 -m site --user-base)/bin
+              // export PATH=$PATH:$(python3 -m site --user-base)/bin
 
               echo "Running safety dependency scan"
 
