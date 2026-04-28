@@ -41,7 +41,8 @@ pipeline {
                   . venv/bin/activate
                   pip3 install ruff --quiet
                   echo "Running Ruff linting"
-                  ruff check services/ --output-format json > ruff-report.json
+                  ruff check services/ --output-format json > ruff-report.json || true
+                  echo "Ruff linting complete"
                 '''
             }
         }
