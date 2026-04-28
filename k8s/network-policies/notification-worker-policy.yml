@@ -35,4 +35,4 @@ spec:
           port: 53
 
         - protocol: UDP
-          ports: 53
+          port: 53
