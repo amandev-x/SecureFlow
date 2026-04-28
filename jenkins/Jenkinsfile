@@ -1,16 +1,6 @@
 pipeline {
     agent any 
-
-    // def getServices() {
-    //     return [
-    //     [name: 'api-gateway', dir: 'api-gateway'],
-    //     [name: 'user-service', dir: 'user-services'],
-    //     [name: 'product-service', dir: 'product-services'],
-    //     [name: 'order-service', dir: 'order-services'],
-    //     [name: 'notification-service', dir: 'notification-services']
-    // ]
-    // }
-
+    
     environment {
         AWS_REGION      =   "ap-south-1"
         ECR_REGISTRY    =   "066606187609.dkr.ecr.ap-south-1.amazonaws.com"
