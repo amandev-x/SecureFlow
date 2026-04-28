@@ -136,7 +136,7 @@ pipeline {
         stage('Infrastructure Scan') {
             steps {
                 sh '''
-                  pip3 install checkov --quiet
+                  pip3 install checkov --quiet || true
                   echo "Running Infrastructure scan"
 
                   checkov -d infrastructure/terraform --framework terraform --output json \
