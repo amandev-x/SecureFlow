@@ -17,7 +17,7 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[ProductResponse])
 def list_products(skip: int = 0, limit: int = 20,db: Session = Depends(get_db)):
-    return db.query(Product).filter(Product.is_active == True).offset(skip).limit(limit).all()
+    return db.query(Product).filter(Product.is_active).offset(skip).limit(limit).all()
 
 @router.get("/{product_id}", response_model=ProductResponse)
 def get_product(product_id: int, db: Session = Depends(get_db)):
