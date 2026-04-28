@@ -489,7 +489,7 @@ Kind provides a production-like Kubernetes environment on a single EC2 instance 
 Principle of least privilege — the app server only needs to pull images, never push. Giving it push permissions would mean a compromised app server could push malicious images to ECR. Jenkins needs push access to deploy new builds.
 
 **Why Argon2 over bcrypt for passwords?**
-Argon2 won the Password Hashing Competition in 2015 and is the current recommended standard. It's more resistant to GPU-based brute force attacks than bcrypt due to its memory-hard design.
+Argon2 is preferred over bcrypt because it’s memory-hard, making GPU-based attacks much more expensive, and it provides better tunability for modern security needs.
 
 **Why soft deletes?**
 Hard deletes are permanent and unrecoverable. Soft deletes (setting `is_active=False`) allow data recovery, maintain referential integrity, and provide an audit trail. Standard practice in production systems.
